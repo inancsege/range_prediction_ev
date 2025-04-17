@@ -70,7 +70,7 @@ class DataHandler:
                 'ecr_deviation', 'driving_style', 'tire_type'
             ])
             self.X, self.y, self.df_clean = preprocessor.preprocess()
-            self.feature_names = self.X.columns  # Store the column names
+            self.feature_names = preprocessor.df_clean.columns  # Store the column names from the cleaned DataFrame
 
 
 def main():
