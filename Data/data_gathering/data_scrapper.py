@@ -30,7 +30,7 @@ manufacturer_ecr = 12.7
 writer, csv_file = initialize_csv_reader(path=csv_path)
 from webdriver_manager.chrome import ChromeDriverManager
 
-driver = webdriver.Chrome(ChromeDriverManager().install())
+driver = webdriver.Chrome()
 driver.get(url=url)
 
 time.sleep(2.)
