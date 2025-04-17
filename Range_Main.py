@@ -61,6 +61,11 @@ class DataHandler:
             self.feature_names = self.X.columns  # Store the column names
             self.y = self.df_clean['trip_distance(km)']
 
+    def preprocess_target_range(self, target_range):
+        """Ensure target range is consistent with preprocessed features."""
+        # Align target_range with the filtered df_clean
+        return target_range.loc[self.df_clean.index]
+
 
 class ModelTrainer:
     def __init__(self, X, y):
@@ -93,8 +98,10 @@ class ModelTrainer:
 
 
 class RangeEstimator:
-    def __init__(self, df_clean):
+    def __init__(self, df_clean, X, feature_names):
         self.df_clean = df_clean
+        self.X = X
+        self.feature_names = feature_names
 
     def calculate_max_range(self):
         """Calculate the maximum battery capacity observed in the dataset."""
@@ -102,6 +109,16 @@ class RangeEstimator:
         self.df_clean['max_range_estimate_km'] = (100 * max_capacity_kwh) / self.df_clean['consumption(kWh/100km)']
         logging.info(f"Max Capacity (kWh): {max_capacity_kwh}")
         return max_capacity_kwh
+
+    def preprocess_target_range(self):
+        """Ensure target range is consistent with preprocessed features."""
+        # Convert self.X to DataFrame if it's a sparse matrix
+        if not isinstance(self.X, pd.DataFrame):
+            X_df = pd.DataFrame(self.X.toarray(), columns=self.feature_names, index=self.df_clean.index[:self.X.shape[0]])
+        else:
+            X_df = self.X
+        # Align target_range with the indices of X_df
+        return self.df_clean.loc[X_df.index.intersection(self.df_clean.index), 'max_range_estimate_km']
 
     def plot_range_comparison(self, X_test_r, y_pred_r):
         """Plot comparison of EV max range estimates."""
@@ -142,9 +159,9 @@ def main():
     plot_actual_vs_predicted(y_test, y_pred)
 
     # Range estimation
-    range_estimator = RangeEstimator(data_handler.df_clean)
+    range_estimator = RangeEstimator(data_handler.df_clean, data_handler.X, data_handler.feature_names)
     max_capacity_kwh = range_estimator.calculate_max_range()
-    target_range = data_handler.df_clean['max_range_estimate_km']
+    target_range = range_estimator.preprocess_target_range()
     y_test_r, y_pred_r = model_trainer.train_random_forest(target_range)
     
     # Convert X_test_r to DataFrame if it's a sparse matrix
