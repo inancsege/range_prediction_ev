@@ -8,7 +8,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 from Transormers.Range_Prediction_EV.utils.utils import load_data, plot_actual_vs_predicted
-from Transormers.Range_Prediction_EV.preprocess.preprocess import preprocess_data
+from Transormers.Range_Prediction_EV.preprocess.preprocess import Preprocessor
 import logging
 
 # Configure logging
@@ -21,7 +21,8 @@ class DataLoader:
         self.data = load_data(file_path)
         if self.data is not None:
             self.feature_names = features  # Store feature names separately
-            self.X, self.Y, self.df_clean = preprocess_data(self.data, key_columns, features)
+            preprocessor = Preprocessor(self.data, key_columns, features)
+            self.X, self.Y, self.df_clean = preprocessor.preprocess()
 
 # RegressionModel class
 class RegressionModel:

@@ -13,7 +13,7 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 import numpy as np
 import matplotlib.pyplot as plt
 from Transormers.Range_Prediction_EV.utils.utils import load_data, preprocess_data, plot_actual_vs_predicted, plot_range_comparison
-from Transormers.Range_Prediction_EV.preprocess.preprocess import preprocess_data
+from Transormers.Range_Prediction_EV.preprocess.preprocess import Preprocessor
 from sklearn.ensemble import RandomForestRegressor
 
 # Configure logging
@@ -125,7 +125,7 @@ def main():
     # Data handling
     data_handler = DataHandler(CONFIG['file_path'])
     data_handler.df = load_data(CONFIG['file_path'])
-    data_handler.X, data_handler.y, data_handler.df_clean = preprocess_data(
+    preprocessor = Preprocessor(
         data_handler.df,
         key_columns=['trip_distance(km)', 'quantity(kWh)', 'avg_speed(km/h)'],
         features=[
@@ -134,6 +134,7 @@ def main():
             'ecr_deviation', 'driving_style', 'tire_type'
         ]
     )
+    data_handler.X, data_handler.y, data_handler.df_clean = preprocessor.preprocess()
 
     # Model training
     model_trainer = ModelTrainer(data_handler.X, data_handler.y)

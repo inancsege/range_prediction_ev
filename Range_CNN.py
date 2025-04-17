@@ -14,6 +14,7 @@ from tensorflow.keras.optimizers import Adam
 from Transormers.Range_Prediction_EV.utils.utils import load_data, preprocess_data, plot_actual_vs_predicted
 from sklearn.preprocessing import StandardScaler
 from tensorflow.keras.callbacks import EarlyStopping
+from Transormers.Range_Prediction_EV.preprocess.preprocess import Preprocessor
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -63,23 +64,13 @@ class DataHandler:
     def preprocess_data(self):
         """Clean and preprocess the data."""
         if self.df is not None:
-            self.df['trip_distance(km)'] = pd.to_numeric(self.df['trip_distance(km)'], errors='coerce')
-            key_columns = ['trip_distance(km)', 'quantity(kWh)', 'avg_speed(km/h)']
-            self.df_clean = self.df.dropna(subset=key_columns)
-            features = [
+            preprocessor = Preprocessor(self.df, ['trip_distance(km)', 'quantity(kWh)', 'avg_speed(km/h)'], [
                 'quantity(kWh)', 'power(kW)', 'consumption(kWh/100km)', 'avg_speed(km/h)',
                 'city', 'motor_way', 'country_roads', 'A/C', 'park_heating',
                 'ecr_deviation', 'driving_style', 'tire_type'
-            ]
-            self.X = pd.get_dummies(self.df_clean[features], columns=['driving_style', 'tire_type'], drop_first=True)
-            self.X = self.X.fillna(0)  # Fill any remaining NaNs with 0
-            self.X = self.X.apply(pd.to_numeric, errors='coerce')  # Ensure all data is numeric
-            non_numeric_columns = self.X.select_dtypes(include=['object']).columns
-            if not non_numeric_columns.empty:
-                logging.error(f"Non-numeric columns found: {non_numeric_columns}")
-            logging.info(f"Data types after preprocessing: {self.X.dtypes}")  # Log data types
+            ])
+            self.X, self.y, self.df_clean = preprocessor.preprocess()
             self.feature_names = self.X.columns  # Store the column names
-            self.y = pd.to_numeric(self.df_clean['trip_distance(km)'], errors='coerce')  # Ensure y is numeric
 
 
 def main():
