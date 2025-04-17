@@ -34,6 +34,7 @@ class DataHandler:
         self.df_clean = None
         self.X = None
         self.y = None
+        self.feature_names = None
 
     def load_data(self):
         """Load CSV data into a DataFrame."""
@@ -57,6 +58,7 @@ class DataHandler:
                 'ecr_deviation', 'driving_style', 'tire_type'
             ]
             self.X = pd.get_dummies(self.df_clean[features], columns=['driving_style', 'tire_type'], drop_first=True)
+            self.feature_names = self.X.columns  # Store the column names
             self.y = self.df_clean['trip_distance(km)']
 
 
@@ -146,7 +148,8 @@ def main():
     
     # Convert X_test_r to DataFrame if it's a sparse matrix
     if not isinstance(data_handler.X, pd.DataFrame):
-        X_test_r = pd.DataFrame(data_handler.X.toarray(), columns=data_handler.X.columns)
+        # Use the stored feature names for columns
+        X_test_r = pd.DataFrame(data_handler.X.toarray(), columns=data_handler.feature_names)
     else:
         X_test_r = data_handler.X
     

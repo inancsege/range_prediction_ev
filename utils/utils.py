@@ -50,9 +50,16 @@ def plot_actual_vs_predicted(y_test, y_pred, title='Actual vs Predicted'):
 
 def plot_range_comparison(df_clean, X_test_r, y_pred_r):
     """Plot comparison of EV max range estimates."""
-    df_clean.loc[X_test_r.index, 'predicted_range_rf'] = y_pred_r
+    # Ensure the indices from X_test_r are aligned with df_clean and match the length of y_pred_r
+    common_indices = df_clean.index.intersection(X_test_r.index)
+    if len(common_indices) == len(y_pred_r):
+        df_clean.loc[common_indices, 'predicted_range_rf'] = y_pred_r
+    else:
+        logging.error("Mismatch between the number of predictions and the number of indices to update.")
+        return
+    
     plt.figure(figsize=(12, 6))
-    sample_df = df_clean.loc[X_test_r.index].copy()
+    sample_df = df_clean.loc[common_indices].copy()
     sample_df = sample_df.sort_values(by='fixed_range_35_8_km').reset_index(drop=True)
     plt.plot(sample_df['fixed_range_35_8_km'], label='Fixed Capacity (35.8 kWh)', linestyle='--')
     plt.plot(sample_df['max_range_estimate_km'], label='Max Observed Capacity (84.6 kWh)', linestyle='-.')
