@@ -38,19 +38,46 @@ def build_cnn_model(input_shape):
     return model
 
 
+class DataHandler:
+    def __init__(self, file_path):
+        self.file_path = file_path
+        self.df = None
+        self.df_clean = None
+        self.X = None
+        self.y = None
+        self.feature_names = None
+
+    def load_data(self):
+        """Load CSV data into a DataFrame."""
+        try:
+            self.df = pd.read_csv(self.file_path)
+            logging.info(f"Data loaded successfully from {self.file_path}")
+        except FileNotFoundError:
+            logging.error(f"File not found: {self.file_path}")
+        except Exception as e:
+            logging.error(f"Error loading data: {e}")
+
+    def preprocess_data(self):
+        """Clean and preprocess the data."""
+        if self.df is not None:
+            self.df['trip_distance(km)'] = pd.to_numeric(self.df['trip_distance(km)'], errors='coerce')
+            key_columns = ['trip_distance(km)', 'quantity(kWh)', 'avg_speed(km/h)']
+            self.df_clean = self.df.dropna(subset=key_columns)
+            features = [
+                'quantity(kWh)', 'power(kW)', 'consumption(kWh/100km)', 'avg_speed(km/h)',
+                'city', 'motor_way', 'country_roads', 'A/C', 'park_heating',
+                'ecr_deviation', 'driving_style', 'tire_type'
+            ]
+            self.X = pd.get_dummies(self.df_clean[features], columns=['driving_style', 'tire_type'], drop_first=True)
+            self.feature_names = self.X.columns  # Store the column names
+            self.y = self.df_clean['trip_distance(km)']
+
+
 def main():
     # Data handling
     data_handler = DataHandler(CONFIG['file_path'])
-    data_handler.df = load_data(CONFIG['file_path'])
-    data_handler.X, data_handler.y, data_handler.df_clean = preprocess_data(
-        data_handler.df,
-        key_columns=['trip_distance(km)', 'quantity(kWh)', 'avg_speed(km/h)'],
-        features=[
-            'quantity(kWh)', 'power(kW)', 'consumption(kWh/100km)', 'avg_speed(km/h)',
-            'city', 'motor_way', 'country_roads', 'A/C', 'park_heating',
-            'ecr_deviation', 'driving_style', 'tire_type'
-        ]
-    )
+    data_handler.load_data()
+    data_handler.preprocess_data()
 
     # Reshape data for CNN
     X_reshaped = data_handler.X.values.reshape((data_handler.X.shape[0], data_handler.X.shape[1], 1))
