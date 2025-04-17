@@ -14,6 +14,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from Transormers.Range_Prediction_EV.utils.utils import load_data, preprocess_data, plot_actual_vs_predicted, plot_range_comparison
 from Transormers.Range_Prediction_EV.preprocess.preprocess import preprocess_data
+from sklearn.ensemble import RandomForestRegressor
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
