@@ -9,9 +9,11 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 import numpy as np
 import matplotlib.pyplot as plt
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Conv1D, Flatten, MaxPooling1D
+from tensorflow.keras.layers import Dense, Conv1D, Flatten, MaxPooling1D, Input
 from tensorflow.keras.optimizers import Adam
 from Transormers.Range_Prediction_EV.utils.utils import load_data, preprocess_data, plot_actual_vs_predicted
+from sklearn.preprocessing import StandardScaler
+from tensorflow.keras.callbacks import EarlyStopping
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -19,17 +21,18 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 # Configuration
 CONFIG = {
     'file_path': os.getenv('CSV_FILE_PATH', '../../Range_Prediction_EV/volkswagen_e_golf.csv'),
-    'test_size': 0.2,
+    'test_size': 0.3,
     'random_state': 42,
     'epochs': 50,
-    'batch_size': 32,
-    'learning_rate': 0.001
+    'batch_size': 8,
+    'learning_rate': 0.01
 }
 
 
 def build_cnn_model(input_shape):
     model = Sequential()
-    model.add(Conv1D(filters=64, kernel_size=2, activation='relu', input_shape=input_shape))
+    model.add(Input(shape=input_shape))  # Use Input layer
+    model.add(Conv1D(filters=64, kernel_size=2, activation='relu'))
     model.add(MaxPooling1D(pool_size=2))
     model.add(Flatten())
     model.add(Dense(50, activation='relu'))
@@ -69,8 +72,14 @@ class DataHandler:
                 'ecr_deviation', 'driving_style', 'tire_type'
             ]
             self.X = pd.get_dummies(self.df_clean[features], columns=['driving_style', 'tire_type'], drop_first=True)
+            self.X = self.X.fillna(0)  # Fill any remaining NaNs with 0
+            self.X = self.X.apply(pd.to_numeric, errors='coerce')  # Ensure all data is numeric
+            non_numeric_columns = self.X.select_dtypes(include=['object']).columns
+            if not non_numeric_columns.empty:
+                logging.error(f"Non-numeric columns found: {non_numeric_columns}")
+            logging.info(f"Data types after preprocessing: {self.X.dtypes}")  # Log data types
             self.feature_names = self.X.columns  # Store the column names
-            self.y = self.df_clean['trip_distance(km)']
+            self.y = pd.to_numeric(self.df_clean['trip_distance(km)'], errors='coerce')  # Ensure y is numeric
 
 
 def main():
@@ -79,13 +88,26 @@ def main():
     data_handler.load_data()
     data_handler.preprocess_data()
 
-    # Reshape data for CNN
-    X_reshaped = data_handler.X.values.reshape((data_handler.X.shape[0], data_handler.X.shape[1], 1))
+    # Normalize the features
+    scaler = StandardScaler()
+    X_normalized = scaler.fit_transform(data_handler.X)
+    X_reshaped = X_normalized.reshape((X_normalized.shape[0], X_normalized.shape[1], 1))
+    logging.info(f"Shape of X_reshaped: {X_reshaped.shape}")  # Log reshaped data shape
 
     # Model training
     X_train, X_test, y_train, y_test = train_test_split(X_reshaped, data_handler.y, test_size=CONFIG['test_size'], random_state=CONFIG['random_state'])
+    logging.info(f"Data types of X_train: {X_train.dtype}, y_train: {y_train.dtype}")  # Log data types
+
+    # Ensure X_train and X_test are numeric
+    X_train = X_train.astype(float)
+    X_test = X_test.astype(float)
+
     cnn_model = build_cnn_model((X_train.shape[1], 1))
-    cnn_model.fit(X_train, y_train, epochs=CONFIG['epochs'], batch_size=CONFIG['batch_size'], verbose=1)
+
+    # Implement early stopping
+    early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
+
+    cnn_model.fit(X_train, y_train, epochs=CONFIG['epochs'], batch_size=CONFIG['batch_size'], verbose=1, validation_split=0.2, callbacks=[early_stopping])
 
     # Evaluation
     y_pred = cnn_model.predict(X_test)
