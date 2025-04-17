@@ -28,7 +28,9 @@ def train_and_evaluate(X, Y):
 
 
 def train_and_evaluate_with_scaling(X, Y):
-    scaler = StandardScaler()
+    # Check if X is sparse and set with_mean accordingly
+    is_sparse = hasattr(X, "toarray")
+    scaler = StandardScaler(with_mean=not is_sparse)
     X_scaled = scaler.fit_transform(X)
     X_train, X_test, y_train, y_test = train_test_split(X_scaled, Y, random_state=1)
     lr = LinearRegression()
