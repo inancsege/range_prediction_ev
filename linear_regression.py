@@ -9,7 +9,7 @@ from sklearn.metrics import mean_squared_error as mse
 #%%
 #%%
 
-from Transormers.Range_Prediction_EV.utils.utils import load_data
+from Transormers.Range_Prediction_EV.utils.utils import load_data, plot_actual_vs_predicted
 from Transormers.Range_Prediction_EV.preprocess.preprocess import prepare_data, preprocess_data
 
 import logging
