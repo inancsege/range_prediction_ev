@@ -80,7 +80,8 @@ def main():
     data_handler.preprocess_data()
 
     # Normalize the features
-    scaler = StandardScaler()
+    is_sparse = hasattr(data_handler.X, "toarray")
+    scaler = StandardScaler(with_mean=not is_sparse)
     X_normalized = scaler.fit_transform(data_handler.X)
     X_reshaped = X_normalized.reshape((X_normalized.shape[0], X_normalized.shape[1], 1))
     logging.info(f"Shape of X_reshaped: {X_reshaped.shape}")  # Log reshaped data shape
