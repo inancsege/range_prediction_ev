@@ -3,6 +3,9 @@ from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.impute import SimpleImputer
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
+import numpy as np
+from sklearn.feature_selection import VarianceThreshold
+from sklearn.ensemble import IsolationForest
 
 
 def preprocess_data(df, key_columns, features):
@@ -36,6 +39,17 @@ def preprocess_data(df, key_columns, features):
     # Apply transformations
     X = preprocessor.fit_transform(df_clean)
     y = df_clean['trip_distance(km)']
+    
+    # Feature selection: Remove features with low variance
+    selector = VarianceThreshold(threshold=0.1)
+    X = selector.fit_transform(X)
+    
+    # Outlier detection and removal
+    iso = IsolationForest(contamination=0.1)
+    yhat = iso.fit_predict(X)
+    mask = yhat != -1
+    X, y = X[mask, :], y[mask]
+    
     return X, y, df_clean
 
 
