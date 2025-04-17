@@ -143,7 +143,14 @@ def main():
     max_capacity_kwh = range_estimator.calculate_max_range()
     target_range = data_handler.df_clean['max_range_estimate_km']
     y_test_r, y_pred_r = model_trainer.train_random_forest(target_range)
-    plot_range_comparison(data_handler.df_clean, data_handler.X, y_pred_r)
+    
+    # Convert X_test_r to DataFrame if it's a sparse matrix
+    if not isinstance(data_handler.X, pd.DataFrame):
+        X_test_r = pd.DataFrame(data_handler.X.toarray(), columns=data_handler.X.columns)
+    else:
+        X_test_r = data_handler.X
+    
+    plot_range_comparison(data_handler.df_clean, X_test_r, y_pred_r)
 
 
 if __name__ == "__main__":
