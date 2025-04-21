@@ -1,75 +1,107 @@
 # Range_Prediction_EV
 
-## Project Description
+## Overview
 
-This project focuses on predicting the driving range of Electric Vehicles (EVs) based on various features like driving style, route characteristics, environmental conditions, and vehicle parameters. It explores different machine learning models to achieve this prediction.
+This project aims to predict the driving range of Electric Vehicles (EVs) using machine learning techniques. It analyzes various factors influencing EV range, such as driving behavior, route characteristics, and vehicle specifications, by training and evaluating several regression models.
 
-## Datasets
+## Project Structure
 
-The project utilizes several datasets, likely derived from the same source but processed differently:
+```
+Range_Prediction_EV/
+├── preprocess/
+│   └── preprocess.py       # Data preprocessing logic (Preprocessor class)
+├── utils/
+│   └── utils.py            # Utility functions (data loading, plotting)
+├── linear_regression.py    # Linear Regression model training and evaluation
+├── range_cnn.py            # Convolutional Neural Network (CNN) model
+├── range_main.py           # Main script coordinating LR/RF training and range estimation
+├── range_random_forest.py  # Decision Tree and Random Forest model training
+├── requirements.txt        # Project dependencies
+├── README.md               # This file
+└── data/                   # (Recommended) Directory for datasets
+    ├── data_cleaned.csv
+    ├── data_enc_label.csv
+    ├── data_enc_dummies.csv
+    └── volkswagen_e_golf.csv
+```
 
-*   `data_cleaned.csv`: A cleaned version of the original dataset.
-*   `data_enc_label.csv`: Dataset with categorical features encoded using label encoding.
-*   `data_enc_dummies.csv`: Dataset with categorical features encoded using one-hot encoding (dummies).
-*   `volkswagen_e_golf.csv`: Specific dataset used for some models, potentially focused on a particular vehicle model.
+## Data
 
-*(Note: Ensure these data files are available or provide instructions on how to obtain them.)*
+The project uses several datasets:
 
-## Preprocessing
+*   `data_cleaned.csv`: Cleaned version of the primary dataset.
+*   `data_enc_label.csv`: Dataset with label-encoded categorical features.
+*   `data_enc_dummies.csv`: Dataset with one-hot encoded categorical features.
+*   `volkswagen_e_golf.csv`: Specific dataset, possibly for the VW e-Golf model.
 
-Data preprocessing is handled by the `preprocess/preprocess.py` script. Key steps include:
-*   Handling missing values (imputation).
-*   Scaling numerical features (StandardScaler).
-*   Encoding categorical features (OneHotEncoder).
-*   Feature selection (VarianceThreshold).
-*   Outlier removal (IsolationForest).
+**Important:** The scripts assume data files are located relative to their position (e.g., `../../Range_Prediction_EV/data_cleaned.csv`). It is recommended to:
+1.  Create a `data` directory within the `Transormers/Range_Prediction_EV` folder.
+2.  Place all `.csv` files inside this `data` directory.
+3.  Adjust the file paths within the Python scripts (e.g., in `load_data` calls or `CONFIG` dictionaries) to point to `data/your_dataset.csv`.
 
-## Models Implemented
+## Preprocessing (`preprocess/preprocess.py`)
 
-Several regression models are implemented and evaluated:
+The `Preprocessor` class handles data preparation, including:
+*   Converting key columns to numeric types.
+*   Dropping rows with missing essential data.
+*   Imputing missing values (mean for numerical, most frequent for categorical).
+*   Scaling numerical features using `StandardScaler`.
+*   Encoding categorical features using `OneHotEncoder`.
+*   Applying `VarianceThreshold` for basic feature selection.
+*   Removing outliers using `IsolationForest`.
 
-1.  **Linear Regression:** (`linear_regression.py`) - Basic linear model, evaluated with and without feature scaling and using different encodings.
-2.  **Decision Tree & Random Forest:** (`range_random_forest.py`) - Tree-based models, evaluated using different encodings.
-3.  **Convolutional Neural Network (CNN):** (`range_cnn.py`) - A 1D CNN model implemented using TensorFlow/Keras.
-4.  **Random Forest for Max Range Estimation:** (`range_main.py`) - Uses Random Forest to predict maximum range based on calculated estimates.
+## Models & Scripts
 
-## Scripts
-
-*   `preprocess/preprocess.py`: Contains the `Preprocessor` class for data cleaning and transformation.
-*   `utils/utils.py`: Provides utility functions for loading data and plotting results (e.g., actual vs. predicted values).
-*   `linear_regression.py`: Trains and evaluates Linear Regression models on different datasets.
-*   `range_random_forest.py`: Trains and evaluates Decision Tree and Random Forest models.
-*   `range_cnn.py`: Trains and evaluates a 1D CNN model.
-*   `range_main.py`: Performs data loading, preprocessing, trains Linear Regression and Random Forest models (specifically for max range), and includes range estimation logic.
+*   **`linear_regression.py`**: Implements and evaluates `LinearRegression` from scikit-learn. Tests performance with and without feature scaling and using different data encodings (`data_cleaned.csv`, `data_enc_label.csv`, `data_enc_dummies.csv`).
+*   **`range_random_forest.py`**: Trains and evaluates `DecisionTreeRegressor` and `RandomForestRegressor` models on the differently encoded datasets. Uses helper classes `DataLoader`, `RegressionModel`, and `Plotter`.
+*   **`range_cnn.py`**: Defines and trains a 1D Convolutional Neural Network (CNN) using TensorFlow/Keras for range prediction, likely on the `volkswagen_e_golf.csv` dataset. Uses a `CONFIG` dictionary for hyperparameters.
+*   **`range_main.py`**: Acts as a high-level script. It loads data (`volkswagen_e_golf.csv`), uses the `Preprocessor`, trains a `LinearRegression` model, and trains a `RandomForestRegressor` specifically for estimating maximum vehicle range based on calculated potential. Also includes plotting utilities. Uses a `CONFIG` dictionary.
+*   **`utils/utils.py`**: Contains helper functions for common tasks like loading CSV files (`load_data`) and generating plots (`plot_actual_vs_predicted`, `plot_range_comparison`).
 
 ## Usage
 
-To run the different model training scripts:
+1.  **Clone the repository:**
+    ```bash
+    git clone <your-repository-url>
+    cd <your-repository-directory>/Transormers/Range_Prediction_EV
+    ```
 
-```bash
-python Transormers/Range_Prediction_EV/linear_regression.py
-python Transormers/Range_Prediction_EV/range_random_forest.py
-python Transormers/Range_Prediction_EV/range_cnn.py
-python Transormers/Range_Prediction_EV/range_main.py
-```
+2.  **Set up environment (Recommended):**
+    ```bash
+    python -m venv venv
+    # Activate the virtual environment (example for bash/zsh)
+    source venv/bin/activate
+    # On Windows:
+    # venv\Scripts\activate
+    ```
 
-*(Ensure the necessary datasets are located correctly relative to the scripts, e.g., in a `data` subdirectory or adjust the paths in the scripts/CONFIG sections.)*
+3.  **Install Dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+4.  **Prepare Data:**
+    *   Create a `data` directory: `mkdir data`
+    *   Download or place your `.csv` datasets (`data_cleaned.csv`, `data_enc_label.csv`, `data_enc_dummies.csv`, `volkswagen_e_golf.csv`) into the `data` directory.
+    *   **Verify and update file paths** within the Python scripts (`.py` files) to correctly reference the files in the `data/` directory (e.g., change `../../Range_Prediction_EV/data_cleaned.csv` to `data/data_cleaned.csv`).
+
+5.  **Run Scripts:** Execute the desired model training script:
+    ```bash
+    python linear_regression.py
+    python range_random_forest.py
+    python range_cnn.py
+    python range_main.py
+    ```
+    *(Note: Plots may be displayed during execution.)*
 
 ## Dependencies
 
-This project requires the following Python libraries:
+All required Python libraries are listed in `requirements.txt`. Key dependencies include:
+*   `pandas`
+*   `numpy`
+*   `scikit-learn`
+*   `matplotlib`
+*   `seaborn`
+*   `tensorflow`
 
-*   pandas
-*   numpy
-*   scikit-learn
-*   matplotlib
-*   seaborn
-*   tensorflow (for the CNN model)
-
-It is recommended to use a virtual environment and install dependencies using pip:
-
-```bash
-pip install pandas numpy scikit-learn matplotlib seaborn tensorflow
-```
-
-You might want to create a `requirements.txt` file for easier dependency management.
+Install them using `pip install -r requirements.txt`.
